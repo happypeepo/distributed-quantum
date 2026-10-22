@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/constants";
 import { useHeliaContext } from "../provider";
 import { addToIndex } from "../lib/local-index";
+import { requestPersistenceOnce } from "../lib/storage-persistence";
 import { notifyVaultIndexChanged } from "./use-local-vault-index";
 
 export function useIpfsUpload() {
+  const queryClient = useQueryClient();
   const { helia, ready, error: heliaError } = useHeliaContext();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -38,6 +42,11 @@ export function useIpfsUpload() {
 
       addToIndex({ cid: cidStr, type, name });
       notifyVaultIndexChanged();
+
+      // Best-effort: a denied or failed request must never fail the publish.
+      void requestPersistenceOnce().then(() =>
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vault.storage() }),
+      );
 
       return cidStr;
     } catch (err) {

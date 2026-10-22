@@ -94,6 +94,17 @@ export const UI = {
     CHECKOUT_CANCELLED: "Checkout cancelled. You have not been charged.",
     ERROR: "Could not reach billing. Please try again.",
   },
+  VAULT_STORAGE: {
+    NOT_PERSISTED_TITLE: "Vault data is not protected from eviction",
+    NOT_PERSISTED_BODY:
+      "Your browser did not grant persistent storage, so it may delete vault items when disk space runs low.",
+    USAGE_HIGH_TITLE: "Browser storage is running low",
+    USAGE_HIGH_BODY:
+      "Vault items live in this browser, and new publishes may fail once storage is full.",
+    USAGE_LABEL: "of this site's storage used.",
+    ADVICE:
+      "Open an item and pin it to a pinning service to keep a copy outside this browser.",
+  },
   NAV: {
     DASHBOARD: "Dashboard",
     ANALYTICS: "Analytics",

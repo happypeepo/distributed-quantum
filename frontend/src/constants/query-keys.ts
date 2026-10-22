@@ -55,6 +55,7 @@ export const QUERY_KEYS = {
     circuitDetail: (cid: string) => ["vault", "circuit", cid] as const,
     runDetail: (cid: string) => ["vault", "run", cid] as const,
     quota: (service: string) => ["vault", "quota", service] as const,
+    storage: () => ["vault", "storage"] as const,
     pinMetadata: (cid: string) => ["vault", "pin-metadata", cid] as const,
     pins: () => ["vault", "pins"] as const,
   },

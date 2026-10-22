@@ -7,6 +7,7 @@ import { DataTable, type DataTableColumn } from "@/shared/components/detail/data
 import { PinStatusBadge } from "@/features/vault-pinning/components/pin-status-badge";
 import { useLocalVaultIndex } from "../hooks/use-local-vault-index";
 import { QuotaDisplay } from "@/features/vault-pinning/components/quota-display";
+import { StorageWarningBanner } from "./storage-warning-banner";
 import type { VaultItem } from "../types";
 
 interface MyVaultClientProps {
@@ -49,6 +50,8 @@ export function MyVaultClient({ type }: MyVaultClientProps) {
       >
         <QuotaDisplay service="nft.storage" variant="header" />
       </PageHeader>
+
+      <StorageWarningBanner hasItems={items.length > 0} />
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
