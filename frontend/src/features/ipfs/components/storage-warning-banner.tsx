@@ -1,10 +1,16 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useState } from "react";
+import { AlertTriangle, X } from "lucide-react";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { CONFIG, UI } from "@/constants";
 import { useStorageStatus } from "../hooks/use-storage-status";
-import { evaluateStorageWarning } from "../lib/storage-persistence";
+import {
+  dismissPersistenceWarning,
+  evaluateStorageWarning,
+  isPersistenceWarningDismissed,
+} from "../lib/storage-persistence";
 
 interface StorageWarningBannerProps {
   hasItems: boolean;
@@ -12,11 +18,13 @@ interface StorageWarningBannerProps {
 
 export function StorageWarningBanner({ hasItems }: StorageWarningBannerProps) {
   const { data: status } = useStorageStatus();
+  const [dismissed, setDismissed] = useState(isPersistenceWarningDismissed);
   if (!status) return null;
 
   const warning = evaluateStorageWarning(status, {
     hasItems,
     warnRatio: CONFIG.VAULT_STORAGE_WARN_RATIO,
+    persistenceWarningDismissed: dismissed,
   });
   if (!warning) return null;
 
@@ -37,6 +45,21 @@ export function StorageWarningBanner({ hasItems }: StorageWarningBannerProps) {
         </p>
         <p>{copy.ADVICE}</p>
       </AlertDescription>
+      {warning === "not-persisted" && (
+        <AlertAction>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={copy.DISMISS}
+            onClick={() => {
+              dismissPersistenceWarning();
+              setDismissed(true);
+            }}
+          >
+            <X />
+          </Button>
+        </AlertAction>
+      )}
     </Alert>
   );
 }

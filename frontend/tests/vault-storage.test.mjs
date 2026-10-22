@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import {
+  dismissPersistenceWarning,
   evaluateStorageWarning,
   getStorageStatus,
+  isPersistenceWarningDismissed,
   requestPersistenceOnce,
 } from "../src/features/ipfs/lib/storage-persistence.ts";
 
@@ -20,6 +22,13 @@ function fakeLocalStorage() {
     setItem: (key, value) => void data.set(key, String(value)),
   });
   return data;
+}
+
+function throwingLocalStorage() {
+  const fail = () => {
+    throw new Error("disabled");
+  };
+  setGlobal("localStorage", { getItem: fail, setItem: fail });
 }
 
 function fakeStorageManager({ persisted = false, persist = true, estimate = {} } = {}) {
@@ -108,14 +117,7 @@ describe("requestPersistenceOnce", () => {
   });
 
   test("still returns the result when localStorage throws", async () => {
-    setGlobal("localStorage", {
-      getItem: () => {
-        throw new Error("disabled");
-      },
-      setItem: () => {
-        throw new Error("disabled");
-      },
-    });
+    throwingLocalStorage();
     fakeStorageManager({ persist: true });
 
     expect(await requestPersistenceOnce()).toBe("granted");
@@ -167,7 +169,7 @@ describe("getStorageStatus", () => {
 });
 
 describe("evaluateStorageWarning", () => {
-  const options = { hasItems: true, warnRatio: 0.8 };
+  const options = { hasItems: true, warnRatio: 0.8, persistenceWarningDismissed: false };
   const status = (overrides) => ({
     persisted: true,
     usage: 10,
@@ -201,5 +203,32 @@ describe("evaluateStorageWarning", () => {
     const unknown = { persisted: null, usage: null, quota: null, usedRatio: null };
 
     expect(evaluateStorageWarning(unknown, options)).toBeNull();
+  });
+
+  test("dismissing hides the persistence warning but never low storage", () => {
+    const dismissed = { ...options, persistenceWarningDismissed: true };
+
+    expect(evaluateStorageWarning(status({ persisted: false }), dismissed)).toBeNull();
+    expect(evaluateStorageWarning(status({ persisted: false, usedRatio: 0.9 }), dismissed)).toBe(
+      "usage-high",
+    );
+  });
+});
+
+describe("dismissPersistenceWarning", () => {
+  test("is remembered", () => {
+    expect(isPersistenceWarningDismissed()).toBe(false);
+
+    dismissPersistenceWarning();
+
+    expect(isPersistenceWarningDismissed()).toBe(true);
+  });
+
+  test("does not throw when localStorage is unavailable", () => {
+    throwingLocalStorage();
+
+    dismissPersistenceWarning();
+
+    expect(isPersistenceWarningDismissed()).toBe(false);
   });
 });

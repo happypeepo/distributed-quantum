@@ -104,6 +104,7 @@ export const UI = {
     USAGE_LABEL: "of this site's storage used.",
     ADVICE:
       "Open an item and pin it to a pinning service to keep a copy outside this browser.",
+    DISMISS: "Dismiss warning",
   },
   NAV: {
     DASHBOARD: "Dashboard",

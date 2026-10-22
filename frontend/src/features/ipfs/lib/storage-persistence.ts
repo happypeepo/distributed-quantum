@@ -10,6 +10,7 @@ export interface StorageStatus {
 }
 
 const PERSIST_RESULT_KEY = "vault:storage_persist:v1";
+const WARNING_DISMISSED_KEY = "vault:storage_warning_dismissed:v1";
 
 let pending: Promise<PersistenceResult> | null = null;
 
@@ -31,6 +32,22 @@ function remember(result: "granted" | "denied"): void {
     localStorage.setItem(PERSIST_RESULT_KEY, result);
   } catch {
     // Private browsing or quota exceeded: we may ask again next session.
+  }
+}
+
+export function isPersistenceWarningDismissed(): boolean {
+  try {
+    return localStorage.getItem(WARNING_DISMISSED_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function dismissPersistenceWarning(): void {
+  try {
+    localStorage.setItem(WARNING_DISMISSED_KEY, "true");
+  } catch {
+    // Private browsing: the warning comes back next session.
   }
 }
 
@@ -92,14 +109,16 @@ export async function getStorageStatus(): Promise<StorageStatus> {
 
 /**
  * Nothing to lose in an empty vault, so only warn once it holds items. Low
- * storage wins over missing persistence because it is the more urgent failure.
+ * storage wins over missing persistence because it is the more urgent failure,
+ * and it cannot be dismissed. A refusal can be permanent (Chrome decides
+ * silently and we never ask again), so that warning can be.
  */
 export function evaluateStorageWarning(
   status: StorageStatus,
-  options: { hasItems: boolean; warnRatio: number },
+  options: { hasItems: boolean; warnRatio: number; persistenceWarningDismissed: boolean },
 ): StorageWarning | null {
   if (!options.hasItems) return null;
   if (status.usedRatio !== null && status.usedRatio >= options.warnRatio) return "usage-high";
-  if (status.persisted === false) return "not-persisted";
+  if (status.persisted === false && !options.persistenceWarningDismissed) return "not-persisted";
   return null;
 }
